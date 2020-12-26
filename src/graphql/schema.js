@@ -1,31 +1,56 @@
-const { schemaComposer } = require('graphql-compose')
+/* eslint-disable no-console */
+const { gql } = require('apollo-server-express')
+const resolvers = require('./resolvers')
 
-require('@app/graphql/types')
+const typeDefs = gql`
+  type Query {
+    user: User!
+  }
+  type Mutation {
+    signIn(email: String!, password: String!): AccessToken!
+    signUp(email: String!, password: String!): AccessToken!
+    logout: Succeed!
+    verifyRequest: Succeed!
+    verify(token: String!): AccessToken!
+    resetPassword(email: String!): Succeed!
+    newPassword(token: String!, newPassword: String!): AccessToken!
+    changePassword(currentPassword: String!, newPassword: String!): Succeed!
+    updateUser(email: String!, firstName: String!, lastName: String!): User!
+    switchLocale(locale: Locale!): User!
+  }
+  type Subscription {
+    userAdded: User
+  }
+  type User {
+    email: String
+    password: String
+    firstName: String
+    lastName: String
+    locale: String
+  }
+  type AccessToken {
+    accessToken: String!
+  }
+  type Succeed {
+    succeed: Boolean!
+  }
+  enum Locale {
+    EN
+    GE
+  }
+`
 
-const { authMiddleware: middleware } = require('@app/middleware')
-const { userValidator: validator } = require('@app/validator')
-const { UserTC } = require('@app/module')
-
-schemaComposer.Query.addFields({
-  user: UserTC.getResolver('user', [middleware.isAuth])
-})
-
-schemaComposer.Mutation.addFields({
-  signIn: UserTC.getResolver('signIn', [middleware.isGuest, validator.signIn]),
-  signUp: UserTC.getResolver('signUp', [middleware.isGuest, validator.signUp]),
-  logout: UserTC.getResolver('logout', [middleware.isAuth]),
-  verifyRequest: UserTC.getResolver('verifyRequest', [middleware.isAuth, middleware.isUnverfied]),
-  verify: UserTC.getResolver('verify'),
-  resetPassword: UserTC.getResolver('resetPassword', [middleware.isGuest, validator.resetPassword]),
-  newPassword: UserTC.getResolver('newPassword', [middleware.isGuest, validator.newPassword]),
-  changePassword: UserTC.getResolver('changePassword', [
-    middleware.isAuth,
-    validator.changePassword
-  ]),
-  updateUser: UserTC.getResolver('updateUser', [middleware.isAuth, validator.updateUser]),
-  switchLocale: UserTC.getResolver('switchLocale', [middleware.isAuth])
-})
-
-const schema = schemaComposer.buildSchema()
+const schema = {
+  typeDefs,
+  resolvers,
+  introspection: true,
+  context: async ({ req, connection, payload }) => {
+    if (connection) {
+      return { isAuth: payload.accessToken }
+    }
+    return { isAuth: req.accessToken }
+  },
+  playground: true
+}
 
 module.exports = schema

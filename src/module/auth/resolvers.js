@@ -1,57 +1,49 @@
+/* eslint-disable no-console */
+/**
+ * File containing all user queries, mutations and subscriptions
+ * @author Rafael Gonzalez <rafygonzalez089@gmail.com>
+ */
+
+const { PubSub } = require('apollo-server')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto-random-string')
 const moment = require('moment')
-
 const redis = require('@app/redis')
 const { userMail } = require('@app/module/auth/mail')
 const { userService } = require('@app/module/auth/service')
 const UserModel = require('@app/module/auth/user')
-
-const user = {
-  name: 'user',
-  type: 'User!',
-  resolve: ({ context: { user } }) => user
+const pubsub = new PubSub()
+const ACCOUNT_ADDED = 'ACCOUNT_ADDED'
+/**
+ * User Queries
+ */
+const UserQueries = {
+  user: async (parent, args, context) => context.user
 }
-
-const signIn = {
-  name: 'signIn',
-  type: 'AccessToken!',
-  args: {
-    email: 'String!',
-    password: 'String!'
-  },
-  resolve: async ({ args: { email, password } }) => {
+/**
+ * User Mutations
+ */
+const UserMutation = {
+  signIn: async (parent, { email, password }) => {
     try {
       const user = await UserModel.emailExist(email)
       if (!user) {
         return Promise.reject(new Error('User not found.'))
       }
-
       const comparePassword = await user.comparePassword(password)
       if (!comparePassword) {
         return Promise.reject(new Error('Password is incorrect.'))
       }
-
       const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRATION
       })
-
       return { accessToken }
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const signUp = {
-  name: 'signUp',
-  type: 'AccessToken!',
-  args: {
-    email: 'String!',
-    password: 'String!'
   },
-  resolve: async ({ args: { email, password }, context: { i18n } }) => {
+  signUp: async (parent, { email, password }, { i18n }) => {
     try {
       let user = await UserModel.emailExist(email)
       if (user) {
@@ -78,44 +70,25 @@ const signUp = {
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const logout = {
-  name: 'logout',
-  type: 'Succeed!',
-  resolve: async ({ context: { user, accessToken } }) => {
+  },
+  logout: async (parent, args, { user, accessToken }) => {
     try {
       await redis.set(`expiredToken:${accessToken}`, user._id, 'EX', process.env.REDIS_TOKEN_EXPIRY)
-
       return { succeed: true }
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const verifyRequest = {
-  name: 'verifyRequest',
-  type: 'Succeed!',
-  resolve: async ({ context: { user } }) => {
+  },
+  verifyRequest: async (parent, args, { user }) => {
     try {
       const token = await userService.verifyRequest(user)
-
       userMail.verifyRequest(user, token)
-
       return { succeed: true }
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const verify = {
-  name: 'verify',
-  type: 'AccessToken!',
-  args: { token: 'String!' },
-  resolve: async ({ args: { token } }) => {
+  },
+  verify: async (parent, { token }) => {
     try {
       const user = await UserModel.findOne({
         'account.verification.token': token
@@ -135,25 +108,16 @@ const verify = {
       })
 
       await user.save()
-
       const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRATION
       })
-
       userMail.verify(user)
-
       return { accessToken }
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const resetPassword = {
-  name: 'resetPassword',
-  type: 'Succeed!',
-  args: { email: 'String!' },
-  resolve: async ({ args: { email } }) => {
+  },
+  resetPassword: async (parent, { email }) => {
     try {
       const user = await UserModel.findOne({ email })
       if (!user) {
@@ -180,14 +144,8 @@ const resetPassword = {
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const newPassword = {
-  name: 'newPassword',
-  type: 'AccessToken!',
-  args: { token: 'String!', newPassword: 'String!' },
-  resolve: async ({ args: { token, newPassword } }) => {
+  },
+  newPassword: async (parent, { token, newPassword }) => {
     try {
       const user = await UserModel.findOne({
         'account.resetPassword.token': token
@@ -195,9 +153,7 @@ const newPassword = {
       if (!user) {
         return Promise.reject(new Error('Access Token is not valid or has expired.'))
       }
-
       const hash = bcrypt.hashSync(newPassword, 10)
-
       user.set({
         password: hash,
         account: {
@@ -207,25 +163,16 @@ const newPassword = {
           }
         }
       })
-
       await user.save()
-
       const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRATION
       })
-
       return { accessToken }
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const changePassword = {
-  name: 'changePassword',
-  type: 'Succeed!',
-  args: { currentPassword: 'String!', newPassword: 'String!' },
-  resolve: async ({ args: { currentPassword, newPassword }, context: { user } }) => {
+  },
+  changePassword: async (parent, { currentPassword, newPassword }, { user }) => {
     try {
       const comparePassword = await user.comparePassword(currentPassword)
       if (!comparePassword) {
@@ -242,14 +189,8 @@ const changePassword = {
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const updateUser = {
-  name: 'updateUser',
-  type: 'User!',
-  args: { email: 'String!', firstName: 'String!', lastName: 'String!' },
-  resolve: async ({ args: { email, firstName, lastName }, context: { user } }) => {
+  },
+  updateUser: async (parent, { email, firstName, lastName }, { user }) => {
     try {
       let {
           account: {
@@ -290,36 +231,24 @@ const updateUser = {
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-}
-
-const switchLocale = {
-  name: 'switchLocale',
-  type: 'User!',
-  args: { locale: 'Locale!' },
-  resolve: async ({ args: { locale }, context: { user } }) => {
+  },
+  switchLocale: async (parent, { locale }, { user }) => {
     try {
       user.set({ locale })
-
       await user.save()
-
       return user
     } catch (error) {
       return Promise.reject(error)
     }
   }
 }
-
-module.exports = {
-  user,
-  signIn,
-  signUp,
-  logout,
-  verifyRequest,
-  verify,
-  resetPassword,
-  newPassword,
-  changePassword,
-  updateUser,
-  switchLocale
+/**
+ * User Subscriptions
+ */
+const UserSubscription = {
+  userAdded: {
+    subscribe: () => pubsub.asyncIterator([ACCOUNT_ADDED])
+  }
 }
+
+module.exports = { UserQueries, UserMutation, UserSubscription }
