@@ -44,11 +44,13 @@ const schema = {
   typeDefs,
   resolvers,
   introspection: true,
-  context: async ({ req, connection, payload }) => {
-    if (connection) {
-      return { isAuth: payload.accessToken }
+  context: async ({ req }) => {
+    return {
+      user: req.user,
+      headers: req.headers,
+      accessToken: req.accessToken,
+      i18n: req.i18n
     }
-    return { isAuth: req.accessToken }
   },
   playground: true
 }
