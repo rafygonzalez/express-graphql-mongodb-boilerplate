@@ -51,7 +51,7 @@ const UserMutation = {
       }
 
       const hash = bcrypt.hashSync(password, 10)
-
+      
       user = await new UserModel({
         email,
         password: hash,

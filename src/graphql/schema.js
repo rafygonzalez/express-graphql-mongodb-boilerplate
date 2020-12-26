@@ -35,8 +35,8 @@ const typeDefs = gql`
     succeed: Boolean!
   }
   enum Locale {
-    EN
-    GE
+    en
+    ge
   }
 `
 
