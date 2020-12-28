@@ -1,8 +1,3 @@
-/**
- * Exporting all resolvers
- * @author Rafael Gonzalez <rafygonzalez089@gmail.com>
- */
-
 const { UserMutation, UserQueries, UserSubscription } = require('@app/module/auth')
 
 const rootResolver = {

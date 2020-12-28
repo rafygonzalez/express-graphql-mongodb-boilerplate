@@ -1,9 +1,3 @@
-/* eslint-disable no-console */
-/**
- * File containing all user queries, mutations and subscriptions
- * @author Rafael Gonzalez <rafygonzalez089@gmail.com>
- */
-
 const { PubSub } = require('apollo-server')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -51,7 +45,7 @@ const UserMutation = {
       }
 
       const hash = bcrypt.hashSync(password, 10)
-      
+
       user = await new UserModel({
         email,
         password: hash,

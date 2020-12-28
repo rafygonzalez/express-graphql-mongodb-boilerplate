@@ -1,8 +1,3 @@
-/**
- * File containing Express Configuration
- * @author Rafael Gonzalez <rafygonzalez089@gmail.com>
- */
-
 const { ApolloServer } = require('apollo-server-express')
 const cors = require('cors')
 const express = require('express')
