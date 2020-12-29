@@ -1,6 +1,6 @@
-const authDirectives = require('./authDirectives')
-
+const authDirective = require('./authDirective')
+const hasRoleDirective = require('./hasRoleDirective')
 module.exports = {
-  // Authentification Directives
-  ...authDirectives
+  hasRole: hasRoleDirective,
+  ...authDirective
 }

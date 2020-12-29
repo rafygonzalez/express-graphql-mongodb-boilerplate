@@ -3,17 +3,21 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto-random-string')
 const moment = require('moment')
-const redis = require('@app/redis')
 const { userMail } = require('@app/module/auth/mail')
 const { userService } = require('@app/module/auth/service')
 const UserModel = require('@app/module/auth/user')
 const pubsub = new PubSub()
 const ACCOUNT_ADDED = 'ACCOUNT_ADDED'
+
 /**
  * User Queries
  */
 const UserQueries = {
-  user: async (parent, args, context) => context.user
+  me: async (parent, args, context) => context.user,
+  users: async () => {
+    const users = await UserModel.find()
+    return users
+  }
 }
 /**
  * User Mutations
@@ -29,9 +33,7 @@ const UserMutation = {
       if (!comparePassword) {
         return Promise.reject(new Error('Password is incorrect.'))
       }
-      const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRATION
-      })
+      const accessToken = user.generateToken()
       return { accessToken }
     } catch (error) {
       return Promise.reject(error)
@@ -52,10 +54,7 @@ const UserMutation = {
         locale: i18n.language
       }).save()
 
-      const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRATION
-      })
-
+      const accessToken = user.generateToken()
       const token = await userService.verifyRequest(user)
 
       userMail.verifyRequest(user, token)
@@ -65,13 +64,8 @@ const UserMutation = {
       return Promise.reject(error)
     }
   },
-  logout: async (parent, args, { user, accessToken }) => {
-    try {
-     // await redis.set(`expiredToken:${accessToken}`, user._id, 'EX', process.env.REDIS_TOKEN_EXPIRY)
-      return { succeed: true }
-    } catch (error) {
-      return Promise.reject(error)
-    }
+  logout: () => {
+    return { succeed: true }
   },
   verifyRequest: async (parent, args, { user }) => {
     try {

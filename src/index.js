@@ -4,7 +4,6 @@ require('module-alias').addAlias('@app', `${__dirname}/`)
 require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 require('@app/service/logger')
-require('@app/redis')
 
 const Express = require('./config/express')
 
