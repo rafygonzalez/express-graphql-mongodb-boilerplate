@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 
-const redis = require('@app/redis')
+//const redis = require('@app/redis')
 const UserModel = require('@app/module/auth/user')
 
 const authentication = async (req, res, next) => {
@@ -18,12 +18,10 @@ const authentication = async (req, res, next) => {
     if (!decoded) {
       return next()
     }
-
-    const isExpired = await redis.get(`expiredToken:${accessToken}`)
+    /*const isExpired = await redis.get(`expiredToken:${accessToken}`)
     if (isExpired) {
       return next()
-    }
-
+    }*/
     const user = await UserModel.findById(decoded.userId)
     if (!user) {
       return next()
