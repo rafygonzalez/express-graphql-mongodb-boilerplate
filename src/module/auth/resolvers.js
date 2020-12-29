@@ -67,7 +67,7 @@ const UserMutation = {
   },
   logout: async (parent, args, { user, accessToken }) => {
     try {
-      await redis.set(`expiredToken:${accessToken}`, user._id, 'EX', process.env.REDIS_TOKEN_EXPIRY)
+     // await redis.set(`expiredToken:${accessToken}`, user._id, 'EX', process.env.REDIS_TOKEN_EXPIRY)
       return { succeed: true }
     } catch (error) {
       return Promise.reject(error)
