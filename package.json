@@ -31,7 +31,8 @@
     "moment": "^2.29.1",
     "mongoose": "^5.11.6",
     "nodemailer": "^6.4.16",
-    "validator": "^13.5.2"
+    "validator": "^13.5.2",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
