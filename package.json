@@ -1,7 +1,7 @@
 {
   "name": "express-graphql-mongodb-boilerplate",
   "version": "0.0.1",
-  "description": "A boilerplate for Node.js apps / GraphQL-API / Authentication from Scratch - Express, graphql - (graphql compose), mongodb (mongoose).",
+  "description": "A boilerplate for Node.js apps / GraphQL (Apollo Server) / Authentication from Scratch / MongoDB",
   "main": "./src",
   "scripts": {
     "start": "cross-env NODE_ENV=production NODE_PATH=./src node ./src",

@@ -27,16 +27,16 @@ const UserMutation = {
     try {
       const user = await UserModel.emailExist(email)
       if (!user) {
-        return Promise.reject(new Error('User not found.'))
+        throw new Error('User not found.')
       }
       const comparePassword = await user.comparePassword(password)
       if (!comparePassword) {
-        return Promise.reject(new Error('Password is incorrect.'))
+        throw new Error('Password is incorrect.')
       }
       const accessToken = user.generateToken()
       return { accessToken }
     } catch (error) {
-      return Promise.reject(error)
+      throw new Error(error.message)
     }
   },
   signUp: async (parent, { email, password }, { i18n }) => {
